@@ -1,0 +1,1373 @@
+{
+  "info": {
+    "_postman_id": "141fd6bb-5c4c-4108-8c96-0fd522a4543e",
+    "name": "Grocery Expiration API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "39036700",
+    "_collection_link": "https://go.postman.co/collection/39036700-141fd6bb-5c4c-4108-8c96-0fd522a4543e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Status",
+      "item": []
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Add Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 (Product Created)\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response contains required product fields\", function () {",
+                  "  const res = pm.response.json();",
+                  "",
+                  "  pm.expect(res).to.have.property(\"id\");",
+                  "  pm.expect(res).to.have.property(\"name\");",
+                  "  pm.expect(res).to.have.property(\"purchaseDate\");",
+                  "  pm.expect(res).to.have.property(\"expirationDate\");",
+                  "  pm.expect(res).to.have.property(\"daysRemaining\");",
+                  "});",
+                  "pm.test(\"daysRemaining is a non-negative integer\", function () {",
+                  "  const res = pm.response.json();",
+                  "",
+                  "  pm.expect(res.daysRemaining).to.be.at.least(0);",
+                  "  pm.expect(Number.isInteger(res.daysRemaining)).to.be.true;",
+                  "});",
+                  "pm.test(\"Response matches product schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"name\", \"purchaseDate\", \"expirationDate\", \"daysRemaining\"],",
+                  "    properties: {",
+                  "      id: { type: \"string\" },",
+                  "      name: { type: \"string\" },",
+                  "      purchaseDate: { type: \"string\" },",
+                  "      expirationDate: { type: \"string\" },",
+                  "      daysRemaining: { type: \"number\", minimum: 0 }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  "pm.test(\"Save productId for later use\", function () {",
+                  "  const res = pm.response.json();",
+                  "  pm.environment.set(\"productId\", res.id);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"milk\",\n  \"purchaseDate\": \"2025-01-10\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 – Product Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"milk\",\n  \"purchaseDate\": \"2025-01-10\"\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"id\": 12,\n  \"name\": \"milk\",\n  \"purchaseDate\": \"2025-01-10\",\n  \"expirationDate\": \"2025-01-17\",\n  \"daysRemaining\": 7\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Add Product - Invalid Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 for invalid name\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"@@@\",\n  \"purchaseDate\": \"2025-01-10\"\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Invalid Name",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "text/plain",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"@@@\",\n  \"purchaseDate\": \"2025-01-10\"\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "text"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Invalid product name\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Product - Missing Purchase Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 for invalid name\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"milk\"\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Missing Purchase Date",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"milk\"\n}\n"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Purchase date is required\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Add Product - Invalid Purchase Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 for invalid name\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"milk\",\n  \"purchaseDate\": \"01-10-2025\"\n}\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Invalid Purchase Date",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"milk\",\n  \"purchaseDate\": \"01-10-2025\"\n}\n"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Invalid purchaseDate format\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Add Product - Missing name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 for missing name\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is not empty\", function () {",
+                  "  pm.expect(pm.response.json().error).to.be.a(\"string\").that.is.not.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 – Missing Name",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Product name is required\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "  pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "pm.test(\"Each product has required fields\", function () {",
+                  "  const products = pm.response.json();",
+                  "",
+                  "  products.forEach(p => {",
+                  "    pm.expect(p).to.have.property(\"id\");",
+                  "    pm.expect(p).to.have.property(\"name\");",
+                  "    pm.expect(p).to.have.property(\"purchaseDate\");",
+                  "    pm.expect(p).to.have.property(\"expirationDate\");",
+                  "    pm.expect(p).to.have.property(\"daysRemaining\");",
+                  "  });",
+                  "});",
+                  "pm.test(\"Response matches products list schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"array\",",
+                  "    items: {",
+                  "      type: \"object\",",
+                  "      required: [\"id\", \"name\", \"purchaseDate\", \"expirationDate\", \"daysRemaining\"],",
+                  "      properties: {",
+                  "        id: { type: \"string\" },",
+                  "        name: { type: \"string\" },",
+                  "        purchaseDate: { type: \"string\" },",
+                  "        expirationDate: { type: \"string\" },",
+                  "        daysRemaining: { type: \"number\", minimum: 0 }",
+                  "      }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 – Product List",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Sun, 28 Dec 2025 22:48:46 GMT"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Content-Encoding",
+                  "value": "gzip"
+                },
+                {
+                  "key": "x-srv-trace",
+                  "value": "v=1;t=4cf9df021b4d6040"
+                },
+                {
+                  "key": "x-srv-span",
+                  "value": "v=1;s=fea9bdd2459a038d"
+                },
+                {
+                  "key": "access-control-allow-origin",
+                  "value": "*"
+                },
+                {
+                  "key": "x-ratelimit-limit",
+                  "value": "120"
+                },
+                {
+                  "key": "x-ratelimit-remaining",
+                  "value": "118"
+                },
+                {
+                  "key": "x-ratelimit-reset",
+                  "value": "1766962160"
+                },
+                {
+                  "key": "etag",
+                  "value": "W/\"f3-HBiIyJWUHUWX/oPT7Emp7x0Nxms\""
+                },
+                {
+                  "key": "vary",
+                  "value": "Accept-Encoding"
+                },
+                {
+                  "key": "x-envoy-upstream-service-time",
+                  "value": "636"
+                },
+                {
+                  "key": "cf-cache-status",
+                  "value": "DYNAMIC"
+                },
+                {
+                  "key": "Set-Cookie",
+                  "value": "__cf_bm=1V2pQlzqFEekmHYT72trL.eTr39BuQJ0Juk9N2YSJoQ-1766962126-1.0.1.1-gOwP4AA3aALnsIoX3UMMJxoZ99d9Yr50zt8LegGRanR0pGRj.vvmMa7vfWcV8tOBJXHxyrVwJgyjbMY9UvQLCVtVrVYBJwT5O3PlqVE9KeI; path=/; expires=Sun, 28-Dec-25 23:18:46 GMT; domain=.pstmn.io; HttpOnly; Secure; SameSite=None"
+                },
+                {
+                  "key": "Server",
+                  "value": "cloudflare"
+                },
+                {
+                  "key": "CF-RAY",
+                  "value": "9b549b690ab6ae0c-IAD"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 12,\n    \"name\": \"milk\",\n    \"purchaseDate\": \"2025-01-10\",\n    \"expirationDate\": \"2025-01-17\",\n    \"daysRemaining\": 7\n  },\n  {\n    \"id\": 13,\n    \"name\": \"eggs\",\n    \"purchaseDate\": \"2025-01-12\",\n    \"expirationDate\": \"2025-01-26\",\n    \"daysRemaining\": 16\n  }\n]\n"
+            }
+          ]
+        },
+        {
+          "name": "Get Product By ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains correct product ID\", function () {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.id).to.eql(pm.environment.get(\"productId\"));",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains required product fields\", function () {",
+                  "  const res = pm.response.json();",
+                  "",
+                  "  pm.expect(res).to.have.property(\"name\");",
+                  "  pm.expect(res).to.have.property(\"purchaseDate\");",
+                  "  pm.expect(res).to.have.property(\"expirationDate\");",
+                  "  pm.expect(res).to.have.property(\"daysRemaining\");",
+                  "});",
+                  "pm.test(\"Response matches product schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"id\", \"name\", \"purchaseDate\", \"expirationDate\", \"daysRemaining\"],",
+                  "    properties: {",
+                  "      id: { type: \"string\" },",
+                  "      name: { type: \"string\" },",
+                  "      purchaseDate: { type: \"string\" },",
+                  "      expirationDate: { type: \"string\" },",
+                  "      daysRemaining: { type: \"number\", minimum: 0 }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 – Product Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/{{productId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "{{productId}}"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"id\": 12,\n  \"name\": \"milk\",\n  \"purchaseDate\": \"2025-01-10\",\n  \"expirationDate\": \"2025-01-17\",\n  \"daysRemaining\": 7\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Get Product By ID – Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/99999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "99999"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "404 – Product Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/99999",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "99999"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Product not found\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Delete Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 (Deleted)\", function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product - Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/non-existent-id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "non-existent-id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Expiration Logic",
+      "item": [
+        {
+          "name": "Get Expiring Products (Days Parameter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  " pm.test(\"Status code is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "  pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "pm.test(\"All items expire within requested days\", function () {",
+                  "  const days = parseInt(pm.request.url.query.get(\"days\"));",
+                  "  const items = pm.response.json();",
+                  "",
+                  "  items.forEach(item => {",
+                  "    pm.expect(item.daysRemaining).to.be.at.most(days);",
+                  "  });",
+                  "});",
+                  "",
+                  "pm.test(\"Response matches expiration product schema\", function () {",
+                  "  const schema = {",
+                  "    type: \"array\",",
+                  "    items: {",
+                  "      type: \"object\",",
+                  "      required: [\"id\", \"name\", \"expirationDate\", \"daysRemaining\"],",
+                  "      properties: {",
+                  "        id: { type: \"string\" },",
+                  "        name: { type: \"string\" },",
+                  "        expirationDate: { type: \"string\" },",
+                  "        daysRemaining: { type: \"number\", minimum: 0 }",
+                  "      }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(schema);",
+                  "});",
+                  "",
+                  "pm.test(\"expirationDate is a valid date string\", function () {",
+                  "  const items = pm.response.json();",
+                  "",
+                  "  items.forEach(item => {",
+                  "    pm.expect(new Date(item.expirationDate).toString()).to.not.equal(\"Invalid Date\");",
+                  "  });",
+                  "});",
+                  "pm.test(\"daysRemaining is an integer\", function () {",
+                  "  const items = pm.response.json();",
+                  "  items.forEach(item => {",
+                  "    pm.expect(Number.isInteger(item.daysRemaining)).to.be.true;",
+                  "  });",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/expiring?days=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "expiring"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "3"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Expiring Products",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/expiring?days=3\n",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "expiring"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "3\n"
+                    }
+                  ]
+                }
+              },
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"milk\",\n    \"expirationDate\": \"2025-01-17\",\n    \"daysRemaining\": 1\n  }\n]\n"
+            }
+          ]
+        },
+        {
+          "name": "Invalid days (negative number)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 for negative days\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is returned\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response).to.have.property(\"error\");",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const errorSchema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(errorSchema);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is not empty\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.error).to.be.a(\"string\").that.is.not.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/expiring?days=-1\n",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "expiring"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "-1\n"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Invalid Days",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/products/expiring?days=-1\n",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "expiring"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "-1\n"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Invalid days parameter\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Missing Days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 when days parameter is missing\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message explains missing parameter\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response).to.have.property(\"error\");",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const errorSchema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(errorSchema);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is not empty\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.error).to.be.a(\"string\").that.is.not.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/expiring",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "expiring"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Missing Days",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/expiring",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "expiring"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{ \n    \"error\": \"Missing days parameter\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Non-numeric days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 for non-numeric days\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is returned\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response).to.have.property(\"error\");",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const errorSchema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(errorSchema);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is not empty\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.error).to.be.a(\"string\").that.is.not.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/expiring?days=abc\n",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "expiring"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "abc\n"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Invalid Days",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/expiring?days=abc\n",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "expiring"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "abc\n"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Invalid days parameter\"\n}\n"
+            }
+          ]
+        },
+        {
+          "name": "Excessive days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Rejects excessively large days value\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Status code is 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response matches schema\", function () {",
+                  "  const errorSchema = {",
+                  "    type: \"object\",",
+                  "    required: [\"error\"],",
+                  "    properties: {",
+                  "      error: { type: \"string\" }",
+                  "    }",
+                  "  };",
+                  "",
+                  "  pm.expect(pm.response.json()).to.have.jsonSchema(errorSchema);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is not empty\", function () {",
+                  "  const response = pm.response.json();",
+                  "  pm.expect(response.error).to.be.a(\"string\").that.is.not.empty;",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/expiring?days=10000\n",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "expiring"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "10000\n"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "400 - Invalid Days",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/expiring?days=10000\n",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "products",
+                    "expiring"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "10000\n"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "body": "{\n  \"error\": \"Invalid days parameter\"\n}\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": []
+    }
+  ]
+}
