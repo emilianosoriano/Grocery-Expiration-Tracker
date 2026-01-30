@@ -33,7 +33,6 @@ export default function AddProductScreen() {
   const [showPurchasePicker, setShowPurchasePicker] = useState(false);
   const [showExpirationPicker, setShowExpirationPicker] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
 
   // Auto-calculate expiration date (7 days from purchase)
   const calculatedExpiration = new Date(purchaseDate);
@@ -71,40 +70,33 @@ export default function AddProductScreen() {
     }
 
     setLoading(true);
-    console.log("Starting to add grocery...");
-    try {
-      await addGrocery({
-        name: name.trim(),
-        category: selectedCategory,
-        purchaseDate: purchaseDate.toISOString().split("T")[0],
-        expirationDate: effectiveExpirationDate.toISOString().split("T")[0],
-        ...(photoUri && { photoUrl: photoUri }),
-      });
 
-      console.log("Grocery added successfully!");
-      setLoading(false);
-      console.log("Setting showSuccess to true");
-      setShowSuccess(true);
-      console.log("showSuccess state should now be true");
+    // Fire and forget
+    addGrocery({
+      name: name.trim(),
+      category: selectedCategory,
+      purchaseDate: purchaseDate.toISOString().split("T")[0],
+      expirationDate: effectiveExpirationDate.toISOString().split("T")[0],
+      ...(photoUri && { photoUrl: photoUri }),
+    }).catch((err) => {
+      console.error("Add grocery failed:", err);
+      Alert.alert("Error", "Failed to add product.");
+    });
 
-      // Wait 1.5 seconds, then reset and navigate
-      setTimeout(() => {
-        console.log("Timeout executing - resetting form and navigating");
-        setName("");
-        setSelectedCategory(null);
-        setPurchaseDate(new Date());
-        setExpirationDate(null);
-        setAutoCalculateExpiration(true);
-        setPhotoUri(null);
-        setShowSuccess(false);
-        router.push("/(tabs)");
-      }, 1500);
-    } catch (error) {
-      console.error("Error adding grocery:", error);
-      Alert.alert("Error", "Failed to add product. Please try again.");
-      setLoading(false);
-    }
+    // Immediately leave the screen
+    router.replace("/(tabs)");
+
+    // Reset local state
+    setName("");
+    setSelectedCategory(null);
+    setPurchaseDate(new Date());
+    setExpirationDate(null);
+    setAutoCalculateExpiration(true);
+    setPhotoUri(null);
+    setLoading(false);
   };
+
+  // End of handleSubmit
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -116,168 +108,157 @@ export default function AddProductScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {showSuccess ? (
-        <View style={styles.successContainer}>
-          <View style={styles.successCircle}>
-            <Ionicons name="checkmark" size={80} color={BrandColors.surface} />
-          </View>
-          <Text style={styles.successText}>Item Added!</Text>
-        </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
-          <Text style={styles.title}>Add New Product</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <Text style={styles.title}>Add New Product</Text>
 
-          {/* Product Name */}
-          <Text style={styles.label}>Product Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., Milk, Eggs, Bread"
-            placeholderTextColor={BrandColors.textMuted}
-            value={name}
-            onChangeText={setName}
-          />
+        {/* Product Name */}
+        <Text style={styles.label}>Product Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., Milk, Eggs, Bread"
+          placeholderTextColor={BrandColors.textMuted}
+          value={name}
+          onChangeText={setName}
+        />
 
-          {/* Label Selection */}
-          <Text style={styles.label}>Label your item</Text>
-          <View style={styles.categoryGrid}>
-            {CATEGORIES.map((category) => (
-              <Pressable
-                key={category.id}
-                style={[
-                  styles.categoryCard,
-                  selectedCategory === category.id && styles.categoryCardActive,
-                ]}
-                onPress={() => setSelectedCategory(category.id)}
-              >
-                <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-                <Text
-                  style={[
-                    styles.categoryLabel,
-                    selectedCategory === category.id &&
-                      styles.categoryLabelActive,
-                  ]}
-                  numberOfLines={2}
-                >
-                  {category.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Purchase Date */}
-          <Text style={styles.label}>Purchase Date</Text>
-          <Pressable
-            style={styles.dateInput}
-            onPress={() => setShowPurchasePicker(true)}
-          >
-            <Text style={styles.dateText}>{formatDate(purchaseDate)}</Text>
-            <Ionicons
-              name="calendar-outline"
-              size={20}
-              color={BrandColors.textMuted}
-            />
-          </Pressable>
-          {showPurchasePicker && (
-            <DateTimePicker
-              value={purchaseDate}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={(_event: any, date?: Date) => {
-                setShowPurchasePicker(Platform.OS === "ios");
-                if (date) setPurchaseDate(date);
-              }}
-            />
-          )}
-
-          {/* Product Image (Optional) */}
-          <Text style={styles.label}>Product Image (Optional)</Text>
-          <Pressable style={styles.imageInput} onPress={pickImage}>
-            {photoUri ? (
-              <Text style={styles.imageText}>Image selected ✓</Text>
-            ) : (
-              <>
-                <Text style={styles.browseText}>Browse...</Text>
-                <Text style={styles.imageText}>No file selected.</Text>
-              </>
-            )}
-          </Pressable>
-
-          {/* Expiration Date */}
-          <Pressable
-            style={styles.checkboxRow}
-            onPress={() => setAutoCalculateExpiration(!autoCalculateExpiration)}
-          >
-            <View
+        {/* Label Selection */}
+        <Text style={styles.label}>Label your item</Text>
+        <View style={styles.categoryGrid}>
+          {CATEGORIES.map((category) => (
+            <Pressable
+              key={category.id}
               style={[
-                styles.checkbox,
-                autoCalculateExpiration && styles.checkboxChecked,
+                styles.categoryCard,
+                selectedCategory === category.id && styles.categoryCardActive,
               ]}
+              onPress={() => setSelectedCategory(category.id)}
             >
-              {autoCalculateExpiration && (
-                <Ionicons
-                  name="checkmark"
-                  size={14}
-                  color={BrandColors.surface}
-                />
-              )}
-            </View>
-            <Text style={styles.checkboxLabel}>Set custom expiration date</Text>
-          </Pressable>
+              <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+              <Text
+                style={[
+                  styles.categoryLabel,
+                  selectedCategory === category.id &&
+                    styles.categoryLabelActive,
+                ]}
+                numberOfLines={2}
+              >
+                {category.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
-          {autoCalculateExpiration ? (
-            <Text style={styles.autoCalcText}>
-              Expiration will be calculated automatically (7 days from purchase)
-            </Text>
+        {/* Purchase Date */}
+        <Text style={styles.label}>Purchase Date</Text>
+        <Pressable
+          style={styles.dateInput}
+          onPress={() => setShowPurchasePicker(true)}
+        >
+          <Text style={styles.dateText}>{formatDate(purchaseDate)}</Text>
+          <Ionicons
+            name="calendar-outline"
+            size={20}
+            color={BrandColors.textMuted}
+          />
+        </Pressable>
+        {showPurchasePicker && (
+          <DateTimePicker
+            value={purchaseDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(_event: any, date?: Date) => {
+              setShowPurchasePicker(Platform.OS === "ios");
+              if (date) setPurchaseDate(date);
+            }}
+          />
+        )}
+
+        {/* Product Image (Optional) */}
+        <Text style={styles.label}>Product Image (Optional)</Text>
+        <Pressable style={styles.imageInput} onPress={pickImage}>
+          {photoUri ? (
+            <Text style={styles.imageText}>Image selected ✓</Text>
           ) : (
             <>
-              <Text style={styles.label}>Expiration Date</Text>
-              <Pressable
-                style={styles.dateInput}
-                onPress={() => setShowExpirationPicker(true)}
-              >
-                <Text style={styles.dateText}>
-                  {expirationDate ? formatDate(expirationDate) : "Select date"}
-                </Text>
-                <Ionicons
-                  name="calendar-outline"
-                  size={20}
-                  color={BrandColors.textMuted}
-                />
-              </Pressable>
-              {showExpirationPicker && (
-                <DateTimePicker
-                  value={expirationDate || new Date()}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={(_event: any, date?: Date) => {
-                    setShowExpirationPicker(Platform.OS === "ios");
-                    if (date) setExpirationDate(date);
-                  }}
-                />
-              )}
+              <Text style={styles.browseText}>Browse...</Text>
+              <Text style={styles.imageText}>No file selected.</Text>
             </>
           )}
+        </Pressable>
 
-          {/* Submit Button */}
-          <Pressable
+        {/* Expiration Date */}
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => setAutoCalculateExpiration(!autoCalculateExpiration)}
+        >
+          <View
             style={[
-              styles.submitButton,
-              loading && styles.submitButtonDisabled,
+              styles.checkbox,
+              autoCalculateExpiration && styles.checkboxChecked,
             ]}
-            onPress={handleSubmit}
-            disabled={loading}
           >
-            <Text style={styles.submitButtonText}>
-              {loading ? "Adding..." : "Add Product"}
-            </Text>
-          </Pressable>
+            {autoCalculateExpiration && (
+              <Ionicons
+                name="checkmark"
+                size={14}
+                color={BrandColors.surface}
+              />
+            )}
+          </View>
+          <Text style={styles.checkboxLabel}>Set custom expiration date</Text>
+        </Pressable>
 
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      )}
+        {autoCalculateExpiration ? (
+          <Text style={styles.autoCalcText}>
+            Expiration will be calculated automatically (7 days from purchase)
+          </Text>
+        ) : (
+          <>
+            <Text style={styles.label}>Expiration Date</Text>
+            <Pressable
+              style={styles.dateInput}
+              onPress={() => setShowExpirationPicker(true)}
+            >
+              <Text style={styles.dateText}>
+                {expirationDate ? formatDate(expirationDate) : "Select date"}
+              </Text>
+              <Ionicons
+                name="calendar-outline"
+                size={20}
+                color={BrandColors.textMuted}
+              />
+            </Pressable>
+            {showExpirationPicker && (
+              <DateTimePicker
+                value={expirationDate || new Date()}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(_event: any, date?: Date) => {
+                  setShowExpirationPicker(Platform.OS === "ios");
+                  if (date) setExpirationDate(date);
+                }}
+              />
+            )}
+          </>
+        )}
+
+        {/* Submit Button */}
+        <Pressable
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? "Adding..." : "Add Product"}
+          </Text>
+        </Pressable>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </SafeAreaView>
   );
+  // End of AddProductScreen
 }
 
 const styles = StyleSheet.create({
@@ -425,24 +406,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: BrandColors.surface,
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  successCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#4CAF50",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  successText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: BrandColors.text,
   },
 });
