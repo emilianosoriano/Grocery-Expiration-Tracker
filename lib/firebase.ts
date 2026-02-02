@@ -1,17 +1,14 @@
-import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FirebaseApp, getApps, initializeApp } from "firebase/app";
+import {
+  Auth,
+  getAuth,
+  getReactNativePersistence,
+  initializeAuth,
+} from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
 
-type FirebaseConfig = {
-  apiKey: string;
-  authDomain?: string;
-  projectId: string;
-  storageBucket?: string;
-  messagingSenderId?: string;
-  appId: string;
-};
-
-const firebaseConfig: FirebaseConfig = {
+const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "",
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? "",
@@ -26,13 +23,38 @@ if (
   !firebaseConfig.appId
 ) {
   throw new Error(
-    "Missing Firebase env vars. Set EXPO_PUBLIC_FIREBASE_API_KEY, EXPO_PUBLIC_FIREBASE_PROJECT_ID, and EXPO_PUBLIC_FIREBASE_APP_ID.",
+    "Missing Firebase env vars. Check EXPO_PUBLIC_FIREBASE_* variables.",
   );
 }
 
-export const firebaseApp: FirebaseApp = getApps().length
-  ? getApp()
-  : initializeApp(firebaseConfig);
+/**
+ * Initialize Firebase App ONCE
+ */
+let firebaseApp: FirebaseApp;
 
-export const auth: Auth = getAuth(firebaseApp);
-export const db: Firestore = getFirestore(firebaseApp);
+if (getApps().length === 0) {
+  firebaseApp = initializeApp(firebaseConfig);
+} else {
+  firebaseApp = getApps()[0];
+}
+
+/**
+ * Initialize Auth WITH persistence FIRST
+ */
+let auth: Auth;
+
+if (getApps().length === 1) {
+  auth = initializeAuth(firebaseApp, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} else {
+  auth = getAuth(firebaseApp);
+}
+
+/**
+ * Firestore
+ */
+const db: Firestore = getFirestore(firebaseApp);
+
+export { auth, db, firebaseApp };
+

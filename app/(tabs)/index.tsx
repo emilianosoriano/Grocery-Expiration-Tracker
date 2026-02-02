@@ -53,12 +53,15 @@ export default function HomeScreen() {
     }
 
     // Category/expiring filter
-    if (activeFilter === "expiring") {
-      items = items.filter(
-        (item) => getDaysUntilExpiration(item.expirationDate) <= 7,
-      );
-    } else {
-      items = items.filter((item) => item.category === activeFilter);
+    // Category/expiring filter (only when NOT searching)
+    if (!searchQuery.trim()) {
+      if (activeFilter === "expiring") {
+        items = items.filter(
+          (item) => getDaysUntilExpiration(item.expirationDate) <= 7,
+        );
+      } else {
+        items = items.filter((item) => item.category === activeFilter);
+      }
     }
 
     return items;
@@ -101,7 +104,13 @@ export default function HomeScreen() {
           placeholder="Search products..."
           placeholderTextColor={BrandColors.textMuted}
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={(text) => {
+            setSearchQuery(text);
+
+            if (text.trim()) {
+              setActiveFilter("expiring"); // optional UX choice
+            }
+          }}
         />
       </View>
 
