@@ -35,29 +35,72 @@ type GroceryContextValue = {
 const GroceryContext = createContext<GroceryContextValue | null>(null);
 
 export function GroceryProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
   const [groceries, setGroceries] = useState<GroceryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("[Grocery] ===== EFFECT TRIGGERED =====");
+    console.log("[Grocery] authLoading:", authLoading);
+    console.log("[Grocery] user:", user ? user.uid : "null");
+
+    // Wait until Firebase finishes restoring auth
+    if (authLoading) {
+      console.log("[Grocery] waiting for auth restore...");
+      setLoading(true);
+      return;
+    }
+
+    // Auth restored but no user logged in
     if (!user) {
+      console.log("[Grocery] no user → clearing groceries");
       setGroceries([]);
       setLoading(false);
       return;
     }
 
+    console.log("[Grocery] ===== ATTACHING SNAPSHOT =====");
+    console.log("[Grocery] User ID:", user.uid);
+    console.log("[Grocery] User email:", user.email);
+
     setLoading(true);
+
     const q = query(
       collection(db, "groceries"),
       where("userId", "==", user.uid),
     );
 
+    console.log("[Grocery] Query created, setting up listener...");
+
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        console.log("[Grocery] ===== SNAPSHOT RECEIVED =====");
+        console.log("[Grocery] Snapshot size:", snapshot.size);
+        console.log("[Grocery] Snapshot empty:", snapshot.empty);
+        console.log(
+          "[Grocery] Snapshot metadata - fromCache:",
+          snapshot.metadata.fromCache,
+        );
+        console.log(
+          "[Grocery] Snapshot metadata - hasPendingWrites:",
+          snapshot.metadata.hasPendingWrites,
+        );
+
         const items: GroceryItem[] = [];
+
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
+          console.log(
+            "[Grocery] Document:",
+            docSnap.id,
+            "- name:",
+            data.name,
+            "- userId:",
+            data.userId,
+          );
+
           items.push({
             id: docSnap.id,
             userId: data.userId,
@@ -76,37 +119,72 @@ export function GroceryProvider({ children }: { children: React.ReactNode }) {
                 : data.updatedAt,
           });
         });
-        // Sort by expiration date (soonest first)
+
         items.sort(
           (a, b) =>
             new Date(a.expirationDate).getTime() -
             new Date(b.expirationDate).getTime(),
         );
+
+        console.log("[Grocery] Total items processed:", items.length);
+        if (items.length > 0) {
+          console.log("[Grocery] First item name:", items[0].name);
+        }
+        console.log("[Grocery] ===== END SNAPSHOT =====");
+
         setGroceries(items);
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching groceries:", error);
+        console.error("[Grocery] ===== SNAPSHOT ERROR =====");
+        console.error("[Grocery] Error code:", error.code);
+        console.error("[Grocery] Error message:", error.message);
+        console.error("[Grocery] Full error:", error);
         setLoading(false);
       },
     );
 
-    return () => unsubscribe();
-  }, [user]);
+    return unsubscribe;
+  }, [user, authLoading]);
+
+  // TODO: Add error handling
 
   const addGrocery = useCallback(
     async (
       item: Omit<GroceryItem, "id" | "userId" | "createdAt" | "updatedAt">,
     ) => {
-      if (!user) return;
+      console.log("[Grocery] ===== ADD GROCERY CALLED =====");
+      console.log("[Grocery] Item name:", item.name);
+      console.log("[Grocery] User:", user ? user.uid : "null");
 
-      const now = new Date().toISOString();
-      await addDoc(collection(db, "groceries"), {
-        ...item,
-        userId: user.uid,
-        createdAt: now,
-        updatedAt: now,
-      });
+      if (!user) {
+        console.error("[Grocery] No user - cannot add grocery");
+        return;
+      }
+
+      try {
+        const now = new Date().toISOString();
+        const docData = {
+          ...item,
+          userId: user.uid,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        console.log("[Grocery] Writing document with data:", docData);
+
+        const docRef = await addDoc(collection(db, "groceries"), docData);
+
+        console.log("[Grocery] ===== WRITE SUCCESS =====");
+        console.log("[Grocery] Document ID:", docRef.id);
+        console.log("[Grocery] Document path:", docRef.path);
+      } catch (error: any) {
+        console.error("[Grocery] ===== WRITE ERROR =====");
+        console.error("[Grocery] Error code:", error.code);
+        console.error("[Grocery] Error message:", error.message);
+        console.error("[Grocery] Full error:", error);
+        throw error;
+      }
     },
     [user],
   );

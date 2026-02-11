@@ -2,11 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FirebaseApp, getApps, initializeApp } from "firebase/app";
 import {
   Auth,
+  browserLocalPersistence,
   getAuth,
   getReactNativePersistence,
   initializeAuth,
 } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
+import { Platform } from "react-native";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "",
@@ -31,23 +33,27 @@ if (
  * Initialize Firebase App ONCE
  */
 let firebaseApp: FirebaseApp;
-
-if (getApps().length === 0) {
-  firebaseApp = initializeApp(firebaseConfig);
-} else {
-  firebaseApp = getApps()[0];
-}
-
-/**
- * Initialize Auth WITH persistence FIRST
- */
 let auth: Auth;
 
-if (getApps().length === 1) {
-  auth = initializeAuth(firebaseApp, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
+if (getApps().length === 0) {
+  // First initialization - create app and auth with persistence
+  firebaseApp = initializeApp(firebaseConfig);
+
+  // Use different persistence based on platform
+  if (Platform.OS === "web") {
+    // Web: use browser local storage persistence
+    auth = initializeAuth(firebaseApp, {
+      persistence: browserLocalPersistence,
+    });
+  } else {
+    // React Native (iOS/Android): use AsyncStorage persistence
+    auth = initializeAuth(firebaseApp, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  }
 } else {
+  // App already exists (hot reload) - get existing instances
+  firebaseApp = getApps()[0];
   auth = getAuth(firebaseApp);
 }
 
@@ -56,5 +62,6 @@ if (getApps().length === 1) {
  */
 const db: Firestore = getFirestore(firebaseApp);
 
-export { auth, db, firebaseApp };
+console.log("[Firebase] Firestore initialized for platform:", Platform.OS);
 
+export { auth, db, firebaseApp };
