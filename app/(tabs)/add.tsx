@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -42,17 +43,59 @@ export default function AddProductScreen() {
     ? calculatedExpiration
     : expirationDate;
 
-  const pickImage = async () => {
+  const pickFromLibrary = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
     });
-
     if (!result.canceled && result.assets[0]) {
       setPhotoUri(result.assets[0].uri);
     }
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission required",
+        "Camera access is needed to take a photo.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const pickFile = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "image/*",
+      copyToCacheDirectory: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      "Product Image",
+      "Choose an option",
+      [
+        { text: "Photo Library", onPress: pickFromLibrary },
+        { text: "Take Photo", onPress: takePhoto },
+        { text: "Choose File", onPress: pickFile },
+        { text: "Cancel", style: "cancel" },
+      ],
+      { cancelable: true },
+    );
   };
 
   const toLocalDateString = (date: Date) => {
@@ -182,13 +225,17 @@ export default function AddProductScreen() {
 
         {/* Product Image (Optional) */}
         <Text style={styles.label}>Product Image (Optional)</Text>
-        <Pressable style={styles.imageInput} onPress={pickImage}>
+        <Pressable style={styles.imageInput} onPress={showImageOptions}>
           {photoUri ? (
             <Text style={styles.imageText}>Image selected ✓</Text>
           ) : (
             <>
-              <Text style={styles.browseText}>Browse...</Text>
-              <Text style={styles.imageText}>No file selected.</Text>
+              <Ionicons
+                name="image-outline"
+                size={18}
+                color={BrandColors.textMuted}
+              />
+              <Text style={styles.imageText}>Tap to add image</Text>
             </>
           )}
         </Pressable>
