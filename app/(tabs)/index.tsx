@@ -1,14 +1,17 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
+  Animated,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -20,12 +23,17 @@ import {
 import { useGroceries } from "@/providers/grocery-provider";
 import { GroceryItem } from "@/types/grocery";
 
+// Parse a YYYY-MM-DD string as a local date (avoids UTC timezone shift)
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 // Calculate days until expiration
 function getDaysUntilExpiration(expirationDate: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const expDate = new Date(expirationDate);
-  expDate.setHours(0, 0, 0, 0);
+  const expDate = parseLocalDate(expirationDate);
   const diffTime = expDate.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
@@ -38,7 +46,7 @@ function getCategoryById(id: CategoryId) {
 type FilterType = "expiring" | CategoryId;
 
 export default function HomeScreen() {
-  const { groceries, loading } = useGroceries();
+  const { groceries, loading, deleteGrocery } = useGroceries();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("expiring");
 
@@ -184,7 +192,7 @@ export default function HomeScreen() {
           </View>
         ) : (
           filteredGroceries.map((item) => (
-            <GroceryCard key={item.id} item={item} />
+            <GroceryCard key={item.id} item={item} onDelete={deleteGrocery} />
           ))
         )}
         <View style={{ height: 20 }} />
@@ -193,44 +201,85 @@ export default function HomeScreen() {
   );
 }
 
-function GroceryCard({ item }: { item: GroceryItem }) {
+function GroceryCard({
+  item,
+  onDelete,
+}: {
+  item: GroceryItem;
+  onDelete: (id: string) => Promise<void>;
+}) {
   const daysRemaining = getDaysUntilExpiration(item.expirationDate);
   const daysColor = getDaysRemainingColor(daysRemaining);
   const category = getCategoryById(item.category);
+  const swipeableRef = useRef<Swipeable>(null);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+  ) => {
+    const translateX = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [80, 0],
+    });
+    return (
+      <Animated.View
+        style={[styles.deleteAction, { transform: [{ translateX }] }]}
+      >
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onDelete(item.id);
+          }}
+        >
+          <Ionicons name="trash-outline" size={24} color="#fff" />
+          <Text style={styles.deleteText}>Delete</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   return (
-    <View style={styles.card}>
-      <View style={styles.cardImageContainer}>
-        {item.photoUrl ? (
-          <Image source={{ uri: item.photoUrl }} style={styles.cardImage} />
-        ) : (
-          <Text style={styles.cardEmoji}>{category?.emoji || "🛒"}</Text>
-        )}
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      rightThreshold={40}
+      overshootRight={false}
+    >
+      <View style={styles.card}>
+        <View style={styles.cardImageContainer}>
+          {item.photoUrl ? (
+            <Image source={{ uri: item.photoUrl }} style={styles.cardImage} />
+          ) : (
+            <Text style={styles.cardEmoji}>{category?.emoji || "🛒"}</Text>
+          )}
+        </View>
+        <View style={styles.cardContent}>
+          <Text style={styles.cardName}>{item.name}</Text>
+          <Text style={styles.cardMeta}>
+            Purchased, {formatDate(item.purchaseDate)}
+          </Text>
+          <Text style={styles.cardMeta}>
+            Expires, {formatDate(item.expirationDate)}
+          </Text>
+        </View>
+        <View style={styles.cardDays}>
+          <Text style={[styles.daysNumber, { color: daysColor }]}>
+            {daysRemaining < 0 ? "!" : daysRemaining}
+          </Text>
+          <Text style={[styles.daysLabel, { color: daysColor }]}>
+            {daysRemaining < 0 ? "expired" : "days"}
+          </Text>
+          <Text style={[styles.daysLabel, { color: daysColor }]}>
+            remaining
+          </Text>
+        </View>
       </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        <Text style={styles.cardMeta}>
-          Purchased, {formatDate(item.purchaseDate)}
-        </Text>
-        <Text style={styles.cardMeta}>
-          Expires, {formatDate(item.expirationDate)}
-        </Text>
-      </View>
-      <View style={styles.cardDays}>
-        <Text style={[styles.daysNumber, { color: daysColor }]}>
-          {daysRemaining < 0 ? "!" : daysRemaining}
-        </Text>
-        <Text style={[styles.daysLabel, { color: daysColor }]}>
-          {daysRemaining < 0 ? "expired" : "days"}
-        </Text>
-        <Text style={[styles.daysLabel, { color: daysColor }]}>remaining</Text>
-      </View>
-    </View>
+    </Swipeable>
   );
 }
 
@@ -390,5 +439,25 @@ const styles = StyleSheet.create({
   daysLabel: {
     fontSize: 11,
     fontWeight: "500",
+  },
+  deleteAction: {
+    justifyContent: "center",
+    alignItems: "flex-end",
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  deleteButton: {
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    height: "100%",
+    gap: 4,
+  },
+  deleteText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

@@ -2,6 +2,7 @@ import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/brand";
@@ -32,18 +33,20 @@ const LightTheme = {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <OnboardingProvider>
-        <GroceryProvider>
-          <SettingsProvider>
-            <ThemeProvider value={LightTheme}>
-              <RootLayoutNav />
-              <StatusBar style="dark" />
-            </ThemeProvider>
-          </SettingsProvider>
-        </GroceryProvider>
-      </OnboardingProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <OnboardingProvider>
+          <GroceryProvider>
+            <SettingsProvider>
+              <ThemeProvider value={LightTheme}>
+                <RootLayoutNav />
+                <StatusBar style="dark" />
+              </ThemeProvider>
+            </SettingsProvider>
+          </GroceryProvider>
+        </OnboardingProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
 

@@ -55,6 +55,13 @@ export default function AddProductScreen() {
     }
   };
 
+  const toLocalDateString = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       Alert.alert("Error", "Please enter a product name");
@@ -75,8 +82,8 @@ export default function AddProductScreen() {
     addGrocery({
       name: name.trim(),
       category: selectedCategory,
-      purchaseDate: purchaseDate.toISOString().split("T")[0],
-      expirationDate: effectiveExpirationDate.toISOString().split("T")[0],
+      purchaseDate: toLocalDateString(purchaseDate),
+      expirationDate: toLocalDateString(effectiveExpirationDate),
       ...(photoUri && { photoUrl: photoUri }),
     }).catch((err) => {
       console.error("Add grocery failed:", err);
@@ -166,9 +173,8 @@ export default function AddProductScreen() {
           <DateTimePicker
             value={purchaseDate}
             mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
+            display={Platform.OS === "ios" ? "inline" : "default"}
             onChange={(_event: any, date?: Date) => {
-              setShowPurchasePicker(Platform.OS === "ios");
               if (date) setPurchaseDate(date);
             }}
           />
@@ -233,9 +239,8 @@ export default function AddProductScreen() {
               <DateTimePicker
                 value={expirationDate || new Date()}
                 mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
+                display={Platform.OS === "ios" ? "inline" : "default"}
                 onChange={(_event: any, date?: Date) => {
-                  setShowExpirationPicker(Platform.OS === "ios");
                   if (date) setExpirationDate(date);
                 }}
               />
