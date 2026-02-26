@@ -20,6 +20,7 @@ import React, {
 
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/auth-provider";
+import { useSettings } from "@/providers/settings-provider";
 import { GroceryItem } from "@/types/grocery";
 
 type GroceryContextValue = {
@@ -36,6 +37,7 @@ const GroceryContext = createContext<GroceryContextValue | null>(null);
 
 export function GroceryProvider({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
+  const { settings } = useSettings();
 
   const [groceries, setGroceries] = useState<GroceryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,6 +148,28 @@ export function GroceryProvider({ children }: { children: React.ReactNode }) {
 
     return unsubscribe;
   }, [user, authLoading]);
+
+  // Auto-delete expired items whenever groceries or settings change
+  useEffect(() => {
+    if (!settings?.autoDeleteExpired || groceries.length === 0) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const threshold = settings.deleteAfterDays ?? 3;
+
+    groceries.forEach((item) => {
+      const [y, m, d] = item.expirationDate.split("-").map(Number);
+      const expDate = new Date(y, m - 1, d);
+      const daysOver = Math.floor(
+        (today.getTime() - expDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      if (daysOver >= threshold) {
+        deleteDoc(doc(db, "groceries", item.id)).catch((err) =>
+          console.error("[Grocery] Auto-delete failed:", err),
+        );
+      }
+    });
+  }, [groceries, settings]);
 
   // TODO: Add error handling
 

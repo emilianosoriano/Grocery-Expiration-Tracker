@@ -269,13 +269,11 @@ function GroceryCard({
         </View>
         <View style={styles.cardDays}>
           <Text style={[styles.daysNumber, { color: daysColor }]}>
-            {daysRemaining < 0 ? "!" : daysRemaining}
+            {daysRemaining}
           </Text>
+          <Text style={[styles.daysLabel, { color: daysColor }]}>days</Text>
           <Text style={[styles.daysLabel, { color: daysColor }]}>
-            {daysRemaining < 0 ? "expired" : "days"}
-          </Text>
-          <Text style={[styles.daysLabel, { color: daysColor }]}>
-            remaining
+            {daysRemaining < 0 ? "expired" : "remaining"}
           </Text>
         </View>
       </View>

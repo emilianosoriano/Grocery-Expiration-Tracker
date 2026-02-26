@@ -36,14 +36,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <OnboardingProvider>
-          <GroceryProvider>
-            <SettingsProvider>
+          <SettingsProvider>
+            <GroceryProvider>
               <ThemeProvider value={LightTheme}>
                 <RootLayoutNav />
                 <StatusBar style="dark" />
               </ThemeProvider>
-            </SettingsProvider>
-          </GroceryProvider>
+            </GroceryProvider>
+          </SettingsProvider>
         </OnboardingProvider>
       </AuthProvider>
     </GestureHandlerRootView>
