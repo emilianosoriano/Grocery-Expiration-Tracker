@@ -1,9 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
-import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -22,6 +21,7 @@ import { useGroceries } from "@/providers/grocery-provider";
 export default function AddProductScreen() {
   const router = useRouter();
   const { addGrocery } = useGroceries();
+  const scrollRef = useRef<ScrollView>(null);
 
   const [name, setName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | null>(
@@ -34,6 +34,15 @@ export default function AddProductScreen() {
   const [showPurchasePicker, setShowPurchasePicker] = useState(false);
   const [showExpirationPicker, setShowExpirationPicker] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Reset pickers and scroll to top every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setShowPurchasePicker(false);
+      setShowExpirationPicker(false);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
+  );
 
   // Auto-calculate expiration date (7 days from purchase)
   const calculatedExpiration = new Date(purchaseDate);
@@ -158,7 +167,7 @@ export default function AddProductScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <Text style={styles.title}>Add New Product</Text>
 
@@ -217,6 +226,7 @@ export default function AddProductScreen() {
             value={purchaseDate}
             mode="date"
             display={Platform.OS === "ios" ? "inline" : "default"}
+            themeVariant="light"
             onChange={(_event: any, date?: Date) => {
               if (date) setPurchaseDate(date);
             }}
@@ -286,6 +296,7 @@ export default function AddProductScreen() {
               <DateTimePicker
                 value={expirationDate || new Date()}
                 mode="date"
+                themeVariant="light"
                 display={Platform.OS === "ios" ? "inline" : "default"}
                 onChange={(_event: any, date?: Date) => {
                   if (date) setExpirationDate(date);
